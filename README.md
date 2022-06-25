@@ -3,7 +3,7 @@
   
   
   
-  Instruction:
+ # Instruction:
    1. build project
    2. run from bin folder
    3. run "dynata.web.exe"
