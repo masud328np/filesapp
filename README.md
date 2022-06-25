@@ -1,6 +1,6 @@
 # Requirement
-  .net 5.0
-  
+  .net 5.0 runtime/sdk
+  vscode/vsstudio
   
   
  # Instruction:
@@ -10,3 +10,10 @@
    4. open chrome browser and go to [local](https://localhost:5001/)
    5. added root folder called "fs".
    6. right click it to see operation list.
+
+
+# Notes::
+  code is not refactored
+  only focus was on design
+  you might see some unused and redundant code
+  code not optimised.
