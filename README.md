@@ -1,5 +1,5 @@
 # Requirement
-  .net 5.0 runtime/sdk
+  .net 5.0 runtime/sdk \
   IDK : vscode/vsstudio
   
   
