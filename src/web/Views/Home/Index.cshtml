@@ -1,0 +1,322 @@
+﻿@using Syncfusion.EJ2
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<style>
+    .container {
+        width: 100%;
+        background: #f2f2f2;
+    }
+
+    .nav {
+        background: #d4d7dc;
+    }
+
+    .details {
+        width: 80%;
+    }
+
+    .detailView {
+        width: 80%;
+    }
+
+    .nav ul {
+        list-style: none;
+        line-height: 24px;
+        padding: 0px;
+    }
+
+    .folder {
+        color: #ff0000;
+    }
+
+    .nav ul li a {
+        color: #333;
+    }
+</style>
+<table width="100%" border="0">
+    <tr valign="top">
+        <td width="20%">
+            <ejs-treeview id="treedata" sortOrder="Ascending" allowEditing="true" nodeClicked="nodeClicked"
+                nodeExpanding="onExpanding" nodeEdited="onEdit" nodeSelected="onSelect">
+                <e-treeview-fields dataSource="ViewBag.Model" id="id" text="name" hasChildren="hasChildren">
+                </e-treeview-fields>
+            </ejs-treeview>
+
+            <ejs-contextmenu id="menu" target="#treedata" items="ViewBag.menuItems" select="menuClick"
+                beforeOpen="beforeOpen">
+            </ejs-contextmenu>
+        </td>
+        <td bgcolor="#aaa" height="200" width="80%">
+            <table width=100% align="center" border="0">
+                <tr>
+                    <td align="center" bgcolor="#b5dcb3">
+                        <label><b>Info</b></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" width="100%">
+                        <div id="body">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <a id="link" href="#"> </a>
+                        <form method="post" action="" enctype="multipart/form-data" id="myform">
+
+                            <input type="file" id="file" name="file" hidden />
+
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+</table>
+
+
+
+
+
+
+<script>
+    var buttonPressed = -1;
+    function addNode(targetNodeId, node) {
+        var tvObj = document.getElementById('treedata').ej2_instances[0];
+        tvObj.addNodes([node], targetNodeId, null);
+        tvObj.fields.dataSource.push(node);
+    }
+    function removeNode(id) {
+        var tvObj = document.getElementById('treedata').ej2_instances[0];
+        tvObj.removeNodes([id]);
+    }
+    function getTvDataById(id) {
+        var tvObj = document.getElementById('treedata').ej2_instances[0];
+        return tvObj.treeData.find(function (x) { return x.id == id });
+    }
+
+    function updateTvData(callback) {
+        var data = document.getElementById('treedata').ej2_instances[0].treeData;
+        callback(data);
+    }
+
+    function getInfo(id, callback) {
+        var tvObj = document.getElementById('treedata').ej2_instances[0];
+        var nodeInfo = tvObj.treeData.find(function (x) { return x.id == id });
+        var type = nodeInfo.type;
+        if (type == undefined) type = "folder";
+        fetchInfo(id, type, callback);
+        // callback(nodeInfo);
+    }
+    function fetchInfo(id, type, callback) {
+        callApi(
+            "/api/filesystem/" + type + "/" + id + "/info"
+            , "GET"
+            , null
+            , callback
+        );
+    }
+    function refreshNode(targetId, targetNode, tvObj) {
+        callApi(
+            "/api/filesystem/folder/" + targetId + "/children"
+            , "GET"
+            , null
+            , function (x) {
+                for (var i = 0; i < x.length; i++) {
+                    var node = tvObj.getNode(x[i].id);
+                    if (node.id != "") continue;
+                    tvObj.addNodes([x[i]], targetNode, null);
+                    tvObj.fields.dataSource.push(x[i]);
+                }
+            }
+        )
+    }
+
+    function onSelect(args) {
+        if (buttonPressed === 3) {
+            buttonPressed = -1;
+            return;
+        }
+        getInfo(args.nodeData.id, function (info) {
+            $('#body').empty();
+            $.each(info, function (key, value) {
+                $('#body').append('<table width="100%"><tr>');
+                $('#body').append('<td align="right"><b><i>' + key + ' - </i></b></td>');
+                $('#body').append('<td >' + value + '</td>');
+                $('#body').append('</tr></table>');
+            });
+        });
+    }
+
+    function onEdit(args, sec) {
+        var editedNodeInfo = getTvDataById(args.nodeData.id);
+        var obj = { name: args.newText, parentId: editedNodeInfo.parentID };
+        var method = "POST";
+        if (!editedNodeInfo.id.includes('tv')) {
+            obj.id = editedNodeInfo.id;
+            method = "PATCH";
+        }
+        callApi(
+            "/api/filesystem/" + editedNodeInfo.type
+            , method
+            , obj
+            , function (x) {
+                if (method == "POST") {
+                    removeNode(editedNodeInfo.id);
+                    addNode(editedNodeInfo.parentID, x);
+                }
+            });
+    }
+
+    function DownloadFile(url, fileName) {
+        //Set the File URL.
+        var url = url;
+
+        $.ajax({
+            url: url,
+            cache: false,
+            type: "GET",
+            success: function (data) {
+
+                //Convert the Byte Data to BLOB object.
+                var blob = new Blob([data], { type: "application/octetstream" });
+
+                //Check the Browser type and download the File.
+                var isIE = false || !!document.documentMode;
+                if (isIE) {
+                    window.navigator.msSaveBlob(blob, fileName);
+                } else {
+                    var url = window.URL || window.webkitURL;
+                    link = url.createObjectURL(blob);
+                    var a = $("<a />");
+                    a.attr("download", fileName);
+                    a.attr("href", link);
+                    $("body").append(a);
+                    a[0].click();
+                    $("body").remove(a);
+                }
+            }
+        });
+    };
+    function callApi(serviceUrl, method, data, callback) {
+
+        $.ajax({
+            url: serviceUrl,
+            type: method,
+            contentType: "application/json; charset=utf-8",
+            success: callback,
+            data: JSON.stringify(data)
+        });
+
+
+    }
+
+    function onExpanding(args) {
+        var tvObj = document.getElementById('treedata').ej2_instances[0];
+        refreshNode(args.nodeData.id, args.node, tvObj);
+    }
+    function nodeClicked(args) {
+        if (args.event.which === 3) {
+            buttonPressed = args.event.which;
+            var treeObj = document.getElementById('treedata').ej2_instances[0];
+            treeObj.selectedNodes = [args.node.getAttribute('data-uid')];
+        }
+    }
+
+
+
+
+
+    function menuClick(args) {
+        var treeObj = document.getElementById('treedata').ej2_instances[0];
+        var menuObj = document.getElementById('menu').ej2_instances[0];
+        var targetNodeId = treeObj.selectedNodes[0];
+
+        if (args.item.text == "Upload") {
+            $('#file').change(function (e) {
+                var fd = new FormData();
+                var file = $('#file')[0].files[0];
+                fd.append('file', file);
+
+                $.ajax({
+                    url: "/api/filesystem/file/" + targetNodeId + "/upload",
+                    type: 'POST',
+                    data: fd,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response != 0) {
+                            refreshNode(targetNodeId
+                                , document.getElementById('treedata').querySelector('[data-uid="' + targetNodeId + '"]')
+                                , treeObj);
+                        }
+                    }
+                });
+            });
+            $("#file").click();
+        }
+        if (args.item.text == "Download") {
+            DownloadFile(
+                "/api/filesystem/file/" + targetNodeId + "/download",
+                treeObj.treeData.find(function (x) { return x.id == targetNodeId }).name
+            );
+        }
+        if (args.item.text == "Add Folder") {
+            var nodeId = "tv_" + Math.floor(Math.random() * 11);
+            var item = {
+                id: nodeId
+                , name: "New Folder"
+                , type: "folder"
+            };
+            treeObj.addNodes([item], targetNodeId, null);
+            treeObj.fields.dataSource.push(item);
+            treeObj.beginEdit(nodeId);
+        }
+
+        else if (args.item.text == "Delete") {
+            var node = getTvDataById(targetNodeId);
+            callApi(
+                "/api/filesystem/" + node.type + "/" + targetNodeId,
+                "DELETE", null, function (x) {
+                    removeNode(targetNodeId);
+                }
+            );
+        }
+
+        else if (args.item.text == "Copy") {
+            var node = getTvDataById(targetNodeId);
+            callApi(
+                "/api/filesystem/" + node.type + "/" + targetNodeId + "/copy",
+                "POST", null, function (x) {
+                    var pId = getTvDataById(targetNodeId).parentID;
+                    refreshNode(pId
+                                , document.getElementById('treedata').querySelector('[data-uid="' + pId + '"]')
+                                , treeObj);
+                }
+            );
+        }
+    }
+    function beforeOpen(args) {
+        var treeObj = document.getElementById('treedata').ej2_instances[0];
+        var menuObj = document.getElementById('menu').ej2_instances[0];
+        var targetNodeId = treeObj.selectedNodes[0];
+        var targetNode = document.getElementById('treedata').querySelector('[data-uid="' + targetNodeId + '"]');
+        if (targetNode.classList.contains('remove')) {
+            menuObj.enableItems(['Remove'], false);
+        }
+        else {
+            menuObj.enableItems(['Remove'], true);
+        }
+        if (targetNode.classList.contains('rename')) {
+            menuObj.enableItems(['Rename'], false);
+        }
+        else {
+            menuObj.enableItems(['Rename'], true);
+        }
+    }
+</script>
