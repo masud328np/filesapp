@@ -13,7 +13,7 @@
 
 
 # Notes::
-  code is not refactored
-  only focus was on design
-  you might see some unused and redundant code
-  code not optimised.
+  code is not refactored \
+  only focus was on design \
+  you might see some unused and redundant code \
+  code not optimised. \
