@@ -105,7 +105,7 @@ namespace web.Controllers
             var oldFolder = await _contentProvider.LookupAsync<folder>(id);
             var newFolder = new folder()
             {
-                Name = oldFolder + " copy",
+                Name = oldFolder.Name + " copy",
                 ParentId = oldFolder.ParentId.Value,
             };
             await CopyFolders(oldFolder, newFolder);

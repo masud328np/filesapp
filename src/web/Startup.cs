@@ -78,12 +78,7 @@ namespace dynata.web
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(
-           Path.Combine(env.ContentRootPath, "staticfiles")),
-                RequestPath = "/staticfiles"
-            });
+            app.UseStaticFiles();
 
             app.UseRouting();
 

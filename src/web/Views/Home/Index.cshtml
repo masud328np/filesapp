@@ -38,7 +38,7 @@
 </style>
 <table width="100%" border="0">
     <tr valign="top">
-        <td width="20%">
+        <td width="20%"><label><b>Explorer >>></b></label>
             <ejs-treeview id="treedata" sortOrder="Ascending" allowEditing="true" nodeClicked="nodeClicked"
                 nodeExpanding="onExpanding" nodeEdited="onEdit" nodeSelected="onSelect">
                 <e-treeview-fields dataSource="ViewBag.Model" id="id" text="name" hasChildren="hasChildren">
@@ -295,8 +295,8 @@
                 "POST", null, function (x) {
                     var pId = getTvDataById(targetNodeId).parentID;
                     refreshNode(pId
-                                , document.getElementById('treedata').querySelector('[data-uid="' + pId + '"]')
-                                , treeObj);
+                        , document.getElementById('treedata').querySelector('[data-uid="' + pId + '"]')
+                        , treeObj);
                 }
             );
         }

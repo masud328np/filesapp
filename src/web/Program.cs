@@ -21,6 +21,7 @@ namespace dynata.web
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseContentRoot(AppDomain.CurrentDomain.BaseDirectory);
+                    webBuilder.UseWebRoot("webroot");
                     webBuilder.UseStartup<Startup>();
                 });
     }

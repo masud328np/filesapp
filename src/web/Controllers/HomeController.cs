@@ -54,11 +54,6 @@ namespace dynata.web.Controllers
 
             menuItems.Add(new
             {
-                text = "Info",
-            });
-
-            menuItems.Add(new
-            {
                 text = "Add Folder",
             });
             menuItems.Add(new
